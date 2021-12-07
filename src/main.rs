@@ -1,6 +1,4 @@
 #![warn(rust_2018_idioms)]
-#[macro_use]
-extern crate serde_derive;
 
 use std::net::{SocketAddr};
 
@@ -8,37 +6,20 @@ use futures::future::{join_all, try_join};
 use log::{error, info};
 use log4rs;
 use tokio;
-use tokio::fs;
 use tokio::io::{self, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
+use tcp_proxy::conf::Conf;
 
 #[tokio::main]
 async fn main() {
     log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
     let mut runners = vec![];
-    let file_path = "config.toml";
-    let content = fs::read_to_string(file_path).await.unwrap();
-    let conf: Conf = toml::from_str(&*content).unwrap();
+    let conf = Conf::parser().await.unwrap();
     for c in conf.proxy {
         runners.push(tokio::spawn(run(c.source_ip, c.source_port, c.target_ip, c.target_port)))
     }
 
     join_all(runners).await;
-}
-
-#[derive(Deserialize)]
-#[derive(Debug)]
-struct ProxyConfig {
-    source_ip: String,
-    source_port: String,
-    target_ip: String,
-    target_port: String,
-}
-
-#[derive(Deserialize)]
-#[derive(Debug)]
-struct Conf {
-    proxy: Vec<ProxyConfig>,
 }
 
 async fn run(source_ip: String, source_port: String, target_ip: String, target_port: String) {
