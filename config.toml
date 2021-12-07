@@ -1,8 +1,10 @@
 [[proxy]]
+source_ip="127.0.0.1"
 source_port="6379"
 target_ip="172.20.110.11"
 target_port="6379"
 [[proxy]]
+source_ip="localhost"
 source_port="3306"
 target_ip="172.20.110.11"
 target_port="3306"
