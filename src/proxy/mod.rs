@@ -39,10 +39,16 @@ impl Proxy {
 
     pub async fn run(&mut self) {
         loop {
-            let (socket, _) = self.listener.unwrap().accept().await.unwrap();
-            info!("receive connection with source: {}",self.local_address);
-            tokio::spawn(self.transfer_tcp(socket));
-            // transfer_tcp(socket, format!("{}:{}",target_ip, target_port).parse().unwrap()).await;
+            match self.listener.take() {
+                None => {}
+                Some(listener) => {
+                    let (socket, _) = listener.accept().await.unwrap();
+                    info!("receive connection with source: {}",self.local_address);
+                    // tokio::spawn(self.transfer_tcp(socket));
+                    self.transfer_tcp(socket).await.unwrap();
+                }
+            }
+
         }
     }
 
